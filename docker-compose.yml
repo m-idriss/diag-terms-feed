@@ -1,0 +1,32 @@
+#version: '3.9'
+
+services:
+  feed:
+    image: dime/diag-terms-feed:latest
+    container_name: diag-terms-feed
+    ports:
+      - "8084:8084"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      TERMS_SERVICE_URL: http://diag-terms-store:8083
+      WORDS_API_KEY: ${WORDS_API_KEY}
+      PORT: 8084
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8084/api/health" ]
+      interval: 300s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+      - ms-network
+    volumes:
+      - feed-data:/var/lib/feed/data
+
+networks:
+  ms-network:
+    name: kafka-network
+    external: true
+volumes:
+  feed-data:
