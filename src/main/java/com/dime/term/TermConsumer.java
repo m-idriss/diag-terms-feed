@@ -2,8 +2,8 @@ package com.dime.term;
 
 import com.dime.model.TermRecord;
 import com.dime.wordsapi.WordsApiService;
+import io.micrometer.common.util.StringUtils;
 import io.quarkus.logging.Log;
-import io.smallrye.reactive.messaging.kafka.Record;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -25,23 +25,23 @@ public class TermConsumer {
    */
   @Transactional
   @Incoming("terms-feed")
-  public void receive(Record<String, String> termRecord) {
-    if (termRecord == null || termRecord.value() == null) {
-      Log.warn("Received null or empty record from Kafka.");
+  public void receive(String word) {
+    if (StringUtils.isBlank(word)) {
+      Log.warn("Received null or empty word from Kafka.");
       return;
     }
 
     try {
-      Log.infof("Received term from Kafka: %s", termRecord.value());
+      Log.infof("Received word from Kafka: %s", word);
 
-      TermApi termApi = wordsApiService.findByWord(termRecord.key());
+      TermApi termApi = wordsApiService.findByWord(word);
       if (termApi == null) {
-        Log.warn("Error: Term not found in wordsApiService for word: [" + termRecord.key() + "]");
+        Log.warn("Error: Term not found in wordsApiService for word: [" + word + "]");
       }
       Log.infof("Received term from Words API: %s", termApi);
 
       TermRecord termApiRecord = TermApiMapper.INSTANCE.toRecord(termApi);
-      termProducer.sendToKafka(termRecord.key(), termApiRecord);
+      termProducer.sendToKafka(word, termApiRecord);
       Log.infof("Sent term to Kafka: %s", termApiRecord);
 
     } catch (Exception e) {
