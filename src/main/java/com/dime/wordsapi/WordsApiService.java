@@ -20,7 +20,7 @@ public interface WordsApiService {
 
   @ClientExceptionMapper
   static RuntimeException toException(Response response) {
-    Log.warn("Error response from wordsapi: " + response.getStatusInfo().getReasonPhrase());
+    Log.info("Error response from wordsapi: " + response.getStatusInfo().getReasonPhrase());
     if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
       return GenericError.WORD_NOT_FOUND.exWithArguments(null);
     }
